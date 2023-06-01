@@ -74,8 +74,7 @@ class Tele2Api:
         if (resp.status_code == 401 or resp.status_code == 403) and self.tries < 1:
             self.tries += 1
             self.updateAuth()
-            self.getDataUsage()
-            return {}
+            return self.getDataUsage()
         elif resp.status_code == 200:
             data = json.loads(resp.content)
             limit = data[Tele2ApiResult.packageLimit]
