@@ -9,6 +9,7 @@ setuptools.setup(
     author="Fredrik Häggbom",
     author_email="fredrik.haggbom@gmail.com",
     description="Python library for communication with Tele2 My TSO",
+    keywords=["tele2"],
     license="Apache 2.0",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,6 +18,7 @@ setuptools.setup(
     install_requires=["requests", "datetime"],
     tests_require=[],
     classifiers=[
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache 2.0",
         "Operating System :: OS Independent",
