@@ -60,6 +60,7 @@ class Tele2Api:
 
         if resp.status_code == 200:
             data = json.loads(resp.content)
+            self.log("Got subscription info: ", str(data))
             if len(data) > 0 and "subsId" in data[0]:
                 return {
                     CONF_SUBSCRIPTION: str(data[0]["subsId"]),
@@ -81,6 +82,14 @@ class Tele2Api:
             usage = data["usage"]
             remaining = data[Tele2ApiResult.remaining]
 
+            self.log(
+                "Got result. Limit: %s, usage: %s, remaining: %s, unlimited: %s",
+                limit,
+                usage,
+                remaining,
+                data[Tele2ApiResult.unlimitedData],
+            )
+
             if Tele2ApiResult.unlimitedData in data:
                 self._data[RES_UNLIMITED] = data[Tele2ApiResult.unlimitedData]
 
@@ -97,18 +106,17 @@ class Tele2Api:
                     ).date()
                     self._data[RES_PERIOD_END] = endDate
 
-            if limit is not None and remaining is not None:
-                dataLeft = remaining
-                self.tries = 0
-                self._data[RES_LIMIT] = limit
-                self._data[RES_USAGE] = usage
-                self._data[RES_DATA_LEFT] = dataLeft
-                self.isUpdating = False
-                return self._data
+            self.tries = 0
+            self._data[RES_LIMIT] = limit
+            self._data[RES_USAGE] = usage
+            self._data[RES_DATA_LEFT] = remaining
+            self.log("Setting native value to: %d", remaining)
+            return self._data
 
         return {}
 
     def updateAuth(self) -> None:
+        self.log("Updating authentication")
         self.session.post(self.AUTH_URL, data=self.CREDENTIALS)
 
     def log(self, msg, *args, **kwargs):
