@@ -12,6 +12,7 @@ from .const import (
     RES_PERIOD_END,
     CONF_SUBSCRIPTION,
     CONF_SUBSCRIPTIONMODEL,
+    RES_ERROR,
     Tele2ApiResult,
 )
 
@@ -31,6 +32,7 @@ class Tele2Api:
             RES_DATA_LEFT: None,
             RES_PERIOD_START: None,
             RES_PERIOD_END: None,
+            RES_ERROR: None,
         }
         self.BASE_URL = "https://my.tso.tele2.se"
         self.AUTH_URL = self.BASE_URL + "/auth/login"
@@ -70,46 +72,52 @@ class Tele2Api:
         return {}
 
     def getDataUsage(self) -> dict:
-        resp = self.session.get(self.DATA_USAGE_URL)
-        if (resp.status_code == 401 or resp.status_code == 403) and self.tries < 1:
-            self.tries += 1
-            self.updateAuth()
-            return self.getDataUsage()
-        elif resp.status_code == 200:
-            data = json.loads(resp.content)
-            limit = data[Tele2ApiResult.packageLimit]
-            usage = data["usage"]
-            remaining = data[Tele2ApiResult.remaining]
+        try:
+            resp = self.session.get(self.DATA_USAGE_URL)
+            if (resp.status_code == 401 or resp.status_code == 403) and self.tries < 1:
+                self.tries += 1
+                self.updateAuth()
+                return self.getDataUsage()
+            elif resp.status_code == 200:
+                data = json.loads(resp.content)
+                limit = data[Tele2ApiResult.packageLimit]
+                usage = data["usage"]
+                remaining = data[Tele2ApiResult.remaining]
 
-            self.log(
-                "Got result. Limit: %s, usage: %s, remaining: %s, unlimited: %s",
-                limit,
-                usage,
-                remaining,
-                data[Tele2ApiResult.unlimitedData],
-            )
+                self.log(
+                    "Got result. Limit: %s, usage: %s, remaining: %s, unlimited: %s",
+                    limit,
+                    usage,
+                    remaining,
+                    data[Tele2ApiResult.unlimitedData],
+                )
+                self._data[RES_ERROR] = None
 
-            if Tele2ApiResult.unlimitedData in data:
-                self._data[RES_UNLIMITED] = data[Tele2ApiResult.unlimitedData]
+                if Tele2ApiResult.unlimitedData in data:
+                    self._data[RES_UNLIMITED] = data[Tele2ApiResult.unlimitedData]
 
-            if Tele2ApiResult.buckets in data and len(data["buckets"]) > 0:
-                bucket = data["buckets"][0]
-                if Tele2ApiResult.startDate in bucket:
-                    startDate = datetime.datetime.strptime(
-                        bucket[Tele2ApiResult.startDate], "%Y-%m-%d"
-                    ).date()
-                    self._data[RES_PERIOD_START] = startDate
-                if Tele2ApiResult.endDate in bucket:
-                    endDate = datetime.datetime.strptime(
-                        bucket[Tele2ApiResult.endDate], "%Y-%m-%d"
-                    ).date()
-                    self._data[RES_PERIOD_END] = endDate
+                if Tele2ApiResult.buckets in data and len(data["buckets"]) > 0:
+                    bucket = data["buckets"][0]
+                    if Tele2ApiResult.startDate in bucket:
+                        startDate = datetime.datetime.strptime(
+                            bucket[Tele2ApiResult.startDate], "%Y-%m-%d"
+                        ).date()
+                        self._data[RES_PERIOD_START] = startDate
+                    if Tele2ApiResult.endDate in bucket:
+                        endDate = datetime.datetime.strptime(
+                            bucket[Tele2ApiResult.endDate], "%Y-%m-%d"
+                        ).date()
+                        self._data[RES_PERIOD_END] = endDate
 
-            self.tries = 0
-            self._data[RES_LIMIT] = limit
-            self._data[RES_USAGE] = usage
-            self._data[RES_DATA_LEFT] = remaining
-            self.log("Setting native value to: %d", remaining)
+                self.tries = 0
+                self._data[RES_LIMIT] = limit
+                self._data[RES_USAGE] = usage
+                self._data[RES_DATA_LEFT] = remaining
+                self.log("Setting native value to: %d", remaining)
+                return self._data
+
+        except requests.exceptions.RequestException as e:
+            self._data[RES_ERROR] = e
             return self._data
 
         return {}
