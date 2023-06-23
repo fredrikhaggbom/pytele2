@@ -50,7 +50,7 @@ class Tele2Api:
             subData = self.getSubscription()
             subscriptionId = subData[CONF_SUBSCRIPTION]
 
-        self.log("Subscription: ", str(subscriptionId))
+        self.log("Subscription: %s", str(subscriptionId))
 
         self.DATA_USAGE_URL = (
             self.BASE_URL + "/api/subscriptions/" + subscriptionId + "/data-usage"
@@ -62,7 +62,7 @@ class Tele2Api:
 
         if resp.status_code == 200:
             data = json.loads(resp.content)
-            self.log("Got subscription info: ", str(data))
+            self.log("Got subscription info: %s", str(data))
             if len(data) > 0 and "subsId" in data[0]:
                 return {
                     CONF_SUBSCRIPTION: str(data[0]["subsId"]),
@@ -109,20 +109,17 @@ class Tele2Api:
                                     bucket[Tele2ApiResult.endDate], "%Y-%m-%d"
                                 ).date()
                                 self._data[RES_PERIOD_END] = endDate
-                            if Tele2ApiResult.remaining in bucket:
-                                if bucket[Tele2ApiResult.remaining] is None:
-                                    remaining = limit
-                                if Tele2ApiResult.unlimitedBucket in bucket:
-                                    self._data[RES_UNLIMITED] = bucket[
-                                        Tele2ApiResult.unlimitedBucket
-                                    ]
+                            if Tele2ApiResult.unlimitedBucket in bucket:
+                                self._data[RES_UNLIMITED] = bucket[
+                                    Tele2ApiResult.unlimitedBucket
+                                ]
                             break
 
                 self.tries = 0
                 self._data[RES_LIMIT] = limit
                 self._data[RES_USAGE] = usage
                 self._data[RES_DATA_LEFT] = remaining
-                self.log("Setting native value to: %d", remaining)
+                self.log("Setting native value to: %f", remaining)
                 return self._data
 
         except requests.exceptions.RequestException as e:
@@ -135,6 +132,6 @@ class Tele2Api:
         self.log("Updating authentication")
         self.session.post(self.AUTH_URL, data=self.CREDENTIALS)
 
-    def log(self, msg, *args, **kwargs):
+    def log(self, msg, *args):
         if self._LOGGER is not None:
-            self._LOGGER.debug(msg, args)
+            self._LOGGER.error(msg, *args)
