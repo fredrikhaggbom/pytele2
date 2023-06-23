@@ -97,17 +97,26 @@ class Tele2Api:
                     self._data[RES_UNLIMITED] = data[Tele2ApiResult.unlimitedData]
 
                 if Tele2ApiResult.buckets in data and len(data["buckets"]) > 0:
-                    bucket = data["buckets"][0]
-                    if Tele2ApiResult.startDate in bucket:
-                        startDate = datetime.datetime.strptime(
-                            bucket[Tele2ApiResult.startDate], "%Y-%m-%d"
-                        ).date()
-                        self._data[RES_PERIOD_START] = startDate
-                    if Tele2ApiResult.endDate in bucket:
-                        endDate = datetime.datetime.strptime(
-                            bucket[Tele2ApiResult.endDate], "%Y-%m-%d"
-                        ).date()
-                        self._data[RES_PERIOD_END] = endDate
+                    for bucket in data["buckets"]:
+                        if bucket["status"] == "active":
+                            if Tele2ApiResult.startDate in bucket:
+                                startDate = datetime.datetime.strptime(
+                                    bucket[Tele2ApiResult.startDate], "%Y-%m-%d"
+                                ).date()
+                                self._data[RES_PERIOD_START] = startDate
+                            if Tele2ApiResult.endDate in bucket:
+                                endDate = datetime.datetime.strptime(
+                                    bucket[Tele2ApiResult.endDate], "%Y-%m-%d"
+                                ).date()
+                                self._data[RES_PERIOD_END] = endDate
+                            if Tele2ApiResult.remaining in bucket:
+                                if bucket[Tele2ApiResult.remaining] is None:
+                                    remaining = limit
+                                if Tele2ApiResult.unlimitedBucket in bucket:
+                                    self._data[RES_UNLIMITED] = bucket[
+                                        Tele2ApiResult.unlimitedBucket
+                                    ]
+                            break
 
                 self.tries = 0
                 self._data[RES_LIMIT] = limit

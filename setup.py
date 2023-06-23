@@ -5,11 +5,11 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pytele2api",
-    version="0.1.5",
+    version="0.1.6",
     author="Fredrik Häggbom",
     author_email="fredrik.haggbom@gmail.com",
     description="Python library for communication with Tele2 My TSO",
-    download_url="https://github.com/fredrikhaggbom/pytele2/archive/refs/tags/0.1.5.tar.gz",
+    download_url="https://github.com/fredrikhaggbom/pytele2/archive/refs/tags/0.1.6.tar.gz",
     keywords=["tele2"],
     license="MIT",
     long_description=long_description,

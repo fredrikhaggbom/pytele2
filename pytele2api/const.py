@@ -18,3 +18,4 @@ class Tele2ApiResult:
     remaining = "remaining"
     packageLimit = "packageLimit"
     buckets = "buckets"
+    unlimitedBucket = "unlimited"
